@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>矩形碰撞demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .tips {
+            display: none;
+            position: absolute;
+            padding: 10px;
+            background-color: aqua;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="tips" id="tips">你碰到我啦！！！</div>
+    <script>
+        class Rect {
+            constructor(options) {
+                this.width = options.width;
+                this.height = options.height;
+                this.left = options.left;
+                this.top = options.top;
+                this.color = options.color;
+                this.initDom();
+            }
+            isCollided() {
+                return allShapes.some((shape) => {
+                    if (shape === this) {
+                        return false;
+                    }
+                    const centerPoint1 = {
+                        x: this.left + this.width / 2,
+                        y: this.top + this.height / 2
+                    };
+                    const centerPoint2 = {
+                        x: shape.left + shape.width / 2,
+                        y: shape.top + shape.height / 2
+                    };
+                    if (Math.abs(centerPoint1.x - centerPoint2.x) <= this.width / 2 + shape.width / 2 && Math.abs(centerPoint1.y - centerPoint2.y) <= this.height / 2 + shape.height / 2) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+            }
+            initDom() {
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.width = this.width + 'px';
+                div.style.height = this.height + 'px';
+                div.style.left = this.left + 'px';
+                div.style.top = this.top + 'px';
+                div.style.backgroundColor = this.color;
+                div.style.cursor = 'move';
+                this.dom = div;
+                document.body.appendChild(div);
+                this.initEvent();
+            }
+            initEvent() {
+                this.dom.addEventListener('mousedown', (event) => {
+                    this.canMove = true;
+                    this.start = {
+                        x: event.clientX,
+                        y: event.clientY,
+                        left: this.left,
+                        top: this.top
+                    };
+                    this.dom.style.zIndex = 2;
+                });
+                this.dom.addEventListener('mousemove', (event) => {
+                    if (this.canMove) {
+                        this.left = this.start.left + (event.clientX - this.start.x);
+                        this.top = this.start.top + (event.clientY - this.start.y);
+                        this.dom.style.left = this.left + 'px';
+                        this.dom.style.top = this.top + 'px';
+                        if (this.isCollided()) {
+                            document.getElementById('tips').style.display = 'block';
+                        } else {
+                            document.getElementById('tips').style.display = 'none';
+                        }
+                    }
+                });
+                this.dom.addEventListener('mouseup', () => {
+                    this.canMove = false;
+                    this.dom.style.zIndex = 1;
+                });
+
+            }
+        }
+        const rect1 = new Rect({
+            width: 200,
+            height: 100,
+            left: 100,
+            top: 100,
+            color: 'red'
+        });
+        const rect2 = new Rect({
+            width: 300,
+            height: 200,
+            left: 350,
+            top: 300,
+            color: 'blue'
+        });
+        const rect3 = new Rect({
+            width: 130,
+            height: 190,
+            left: 50,
+            top: 300,
+            color: 'green'
+        });
+        const allShapes = [rect1, rect2, rect3];
+    </script>
+</body>
+
+</html>

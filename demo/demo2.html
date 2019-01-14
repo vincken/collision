@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>圆形碰撞demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .tips {
+            display: none;
+            position: absolute;
+            padding: 10px;
+            background-color: aqua;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="tips" id="tips">你碰到我啦！！！</div>
+    <script>
+        class Circle {
+            constructor(options) {
+                this.radius = options.radius;
+                this.left = options.left;
+                this.top = options.top;
+                this.color = options.color;
+                this.initDom();
+            }
+            isCollided() {
+                return allShapes.some((shape) => {
+                    if (shape === this) {
+                        return false;
+                    }
+                    const centerPoint1 = {
+                        x: this.left + this.radius,
+                        y: this.top + this.radius
+                    };
+                    const centerPoint2 = {
+                        x: shape.left + shape.radius,
+                        y: shape.top + shape.radius
+                    };
+                    if (Math.sqrt(Math.pow(Math.abs(centerPoint1.x - centerPoint2.x), 2) + Math.pow(Math.abs(centerPoint1.y - centerPoint2.y), 2)) < this.radius + shape.radius) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                });
+            }
+            initDom() {
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.width = this.radius * 2 + 'px';
+                div.style.height = this.radius * 2 + 'px';
+                div.style.left = this.left + 'px';
+                div.style.top = this.top + 'px';
+                div.style.backgroundColor = this.color;
+                div.style.cursor = 'move';
+                div.style.borderRadius = '100%';
+                this.dom = div;
+                document.body.appendChild(div);
+                this.initEvent();
+            }
+            initEvent() {
+                this.dom.addEventListener('mousedown', (event) => {
+                    this.canMove = true;
+                    this.start = {
+                        x: event.clientX,
+                        y: event.clientY,
+                        left: this.left,
+                        top: this.top
+                    };
+                    this.dom.style.zIndex = 2;
+                });
+                this.dom.addEventListener('mousemove', (event) => {
+                    if (this.canMove) {
+                        this.left = this.start.left + (event.clientX - this.start.x);
+                        this.top = this.start.top + (event.clientY - this.start.y);
+                        this.dom.style.left = this.left + 'px';
+                        this.dom.style.top = this.top + 'px';
+                        if (this.isCollided()) {
+                            document.getElementById('tips').style.display = 'block';
+                        } else {
+                            document.getElementById('tips').style.display = 'none';
+                        }
+                    }
+                });
+                this.dom.addEventListener('mouseup', () => {
+                    this.canMove = false;
+                    this.dom.style.zIndex = 1;
+                });
+
+            }
+        }
+        const circle1 = new Circle({
+            left: 100,
+            top: 50,
+            radius: 100,
+            color: 'red'
+        });
+        const circle2 = new Circle({
+            left: 350,
+            top: 300,
+            radius: 150,
+            color: 'blue'
+        });
+        const circle3 = new Circle({
+            left: 50,
+            top: 300,
+            radius: 120,
+            color: 'green'
+        });
+        const allShapes = [circle1, circle2, circle3];
+    </script>
+</body>
+
+</html>

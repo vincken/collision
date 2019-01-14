@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>已旋转矩形碰撞demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .tips {
+            display: none;
+            position: absolute;
+            padding: 10px;
+            background-color: aqua;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="tips" id="tips">你碰到我啦！！！</div>
+    <script>
+        class Vector {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+            getMagnitude() {
+                return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+            }
+            add(vector) {
+                var v = new Vector();
+                v.x = this.x + vector.x;
+                v.y = this.y + vector.y;
+                return v;
+            }
+            subtract(vector) {
+                var v = new Vector();
+                v.x = this.x - vector.x;
+                v.y = this.y - vector.y;
+                return v;
+            }
+            dot(vector) {
+                return this.x * vector.x + this.y * vector.y;
+            }
+            edge(vector) {
+                return this.subtract(vector);
+            }
+            perpendicular() {
+                var v = new Vector();
+                v.x = this.y;
+                v.y = 0 - this.x;
+                return v;
+            }
+            normalize() {
+                var v = new Vector(),
+                    m = this.getMagnitude();
+                v.x = this.x / m;
+                v.y = this.y / m;
+                return v;
+            }
+            normal() {
+                var p = this.perpendicular();
+                return p.normalize();
+            }
+            rotate(angle) {
+                var radians = angle * Math.PI / 180
+                var sin = Math.sin(radians),
+                    cos = Math.cos(radians),
+                    rx = this.x * cos - this.y * sin,
+                    ry = this.x * sin + this.y * cos;
+                return {
+                    x: rx,
+                    y: ry
+                }
+            }
+        };
+        class Rect {
+            constructor(options) {
+                this.width = options.width;
+                this.height = options.height;
+                this.left = options.left;
+                this.top = options.top;
+                this.color = options.color;
+                this.angle = options.angle;
+                this.initDom();
+            }
+            getCenter() {
+                const width = this.width;
+                const height = this.height;
+                const radian = this.angle * Math.PI / 180;
+                let tl = {
+                    x: this.left,
+                    y: this.top
+                };
+                let tr = {
+                    x: tl.x + width * Math.cos(radian),
+                    y: tl.y + width * Math.sin(radian)
+                };
+                let br = {
+                    x: tr.x - height * Math.sin(radian),
+                    y: tr.y + height * Math.cos(radian)
+                };
+                let bl = {
+                    x: tl.x - height * Math.sin(radian),
+                    y: tl.y + height * Math.cos(radian)
+                };
+                return new Vector((tl.x + br.x) / 2, (tl.y + br.y) / 2);
+            }
+            getAxes() {
+                const radian = this.angle * Math.PI / 180;
+                return [new Vector(Math.cos(radian), Math.sin(radian)), new Vector(-1 * Math.sin(radian), Math.cos(radian))];
+            }
+            getProjectionRadius(obb, axis) {
+                //矩形投影等于长和宽的投影之和
+                return (obb.width * Math.abs(axis.dot(obb.axes[0])) + obb.height * Math.abs(axis.dot(obb.axes[1]))) / 2;
+            }
+            isCollided() {
+                allShapes.forEach((rect) => {
+                    rect.center = rect.getCenter();
+                    rect.axes = rect.getAxes();
+                });
+                const nv = rect1.center.subtract(rect2.center);
+                return rect1.axes.concat(rect2.axes).every((axis) => {
+                    return this.getProjectionRadius(rect1, axis) + this.getProjectionRadius(rect2, axis) > Math.abs(nv.dot(axis));
+                });
+            }
+
+            initDom() {
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.width = this.width + 'px';
+                div.style.height = this.height + 'px';
+                div.style.left = this.left + 'px';
+                div.style.top = this.top + 'px';
+                div.style.backgroundColor = this.color;
+                div.style.cursor = 'move';
+                div.style.transform = `rotate(${this.angle}deg)`;
+                div.style.transformOrigin = 'left top';
+                this.dom = div;
+                document.body.appendChild(div);
+                this.initEvent();
+            }
+            initEvent() {
+                this.dom.addEventListener('mousedown', (event) => {
+                    this.canMove = true;
+                    this.start = {
+                        x: event.clientX,
+                        y: event.clientY,
+                        left: this.left,
+                        top: this.top
+                    };
+                    this.dom.style.zIndex = 2;
+                });
+                this.dom.addEventListener('mousemove', (event) => {
+                    if (this.canMove) {
+                        this.left = this.start.left + (event.clientX - this.start.x);
+                        this.top = this.start.top + (event.clientY - this.start.y);
+                        this.dom.style.left = this.left + 'px';
+                        this.dom.style.top = this.top + 'px';
+                        if (this.isCollided()) {
+                            document.getElementById('tips').style.display = 'block';
+                        } else {
+                            document.getElementById('tips').style.display = 'none';
+                        }
+                    }
+                });
+                this.dom.addEventListener('mouseup', () => {
+                    this.canMove = false;
+                    this.dom.style.zIndex = 1;
+                });
+
+            }
+        }
+        const rect1 = new Rect({
+            width: 200,
+            height: 100,
+            left: 100,
+            top: 100,
+            color: 'red',
+            angle: 37,
+        });
+        const rect2 = new Rect({
+            width: 130,
+            height: 190,
+            left: 250,
+            top: 300,
+            color: 'green',
+            angle: 76
+        });
+        const allShapes = [rect1, rect2];
+    </script>
+</body>
+
+</html>
