@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>未旋转矩形的边界判断demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+    </style>
+</head>
+
+<body>
+    <script>
+        class Rect {
+            constructor(options) {
+                this.width = options.width;
+                this.height = options.height;
+                this.left = options.left;
+                this.top = options.top;
+                this.color = options.color;
+                this.isLocked = options.isLocked;
+                this.initDom();
+            }
+            hasOverstepped(){
+                return !(this.left >= rect1.left && this.top >= rect1.top && this.left + this.width <= rect1.left + rect1.width && this.top + this.height <= rect1.top + rect1.height);
+            }
+            initDom() {
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.width = this.width + 'px';
+                div.style.height = this.height + 'px';
+                div.style.left = this.left + 'px';
+                div.style.top = this.top + 'px';
+                div.style.backgroundColor = this.color;
+                div.style.cursor = 'move';
+                this.dom = div;
+                document.body.appendChild(div);
+                this.initEvent();
+            }
+            initEvent() {
+                if(!this.isLocked){
+                    this.dom.addEventListener('mousedown', (event) => {
+                        this.canMove = true;
+                        this.start = {
+                            x: event.clientX,
+                            y: event.clientY,
+                            left: this.left,
+                            top: this.top
+                        };
+                        this.dom.style.zIndex = 2;
+                    });
+                    this.dom.addEventListener('mousemove', (event) => {
+                        if (this.canMove && !this.hasOverstepped()) {
+                            let newLeft = this.start.left + (event.clientX - this.start.x);
+                            if(newLeft < rect1.left){
+                                newLeft = rect1.left;
+                            }
+                            if(newLeft > rect1.left + rect1.width - this.width){
+                                newLeft = rect1.left + rect1.width - this.width;
+                            }
+                            this.left = newLeft;
+                            let newTop = this.start.top + (event.clientY - this.start.y);
+                            if(newTop < rect1.top){
+                                newTop = rect1.top;
+                            }
+                            if(newTop > rect1.top + rect1.height - this.height){
+                                newTop = rect1.top + rect1.height - this.height;
+                            }
+                            this.top = newTop;
+                            this.dom.style.left = this.left + 'px';
+                            this.dom.style.top = this.top + 'px';
+                        }
+                    });
+                    this.dom.addEventListener('mouseup', () => {
+                        this.canMove = false;
+                        this.dom.style.zIndex = 1;
+                    });
+                }
+
+            }
+        }
+        const rect1 = new Rect({
+            width: 1000,
+            height: 600,
+            left: 100,
+            top: 100,
+            color: 'red',
+            isLocked: true
+        });
+        const rect2 = new Rect({
+            width: 300,
+            height: 200,
+            left: 350,
+            top: 300,
+            color: 'blue'
+        });
+        const rect3 = new Rect({
+            width: 130,
+            height: 190,
+            left: 200,
+            top: 300,
+            color: 'green'
+        });
+        const allShapes = [rect1, rect2, rect3];
+    </script>
+</body>
+
+</html>

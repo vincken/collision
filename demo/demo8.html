@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>已旋转矩形边界判断demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        class Rect {
+            constructor(options) {
+                this.width = options.width;
+                this.height = options.height;
+                this.left = options.left;
+                this.top = options.top;
+                this.color = options.color;
+                this.isLocked = options.isLocked;
+                this.angle = options.angle;
+                this.initDom();
+                this.setCoords();
+            }
+            setCoords() {
+                this.coords = this.calculateCoords();
+            }
+            calculateCoords() {
+                const width = this.width;
+                const height = this.height;
+                const radian = this.angle * Math.PI / 180;
+                let tl = {
+                    x: this.left,
+                    y: this.top
+                };
+                let tr = {
+                    x: tl.x + width * Math.cos(radian),
+                    y: tl.y + width * Math.sin(radian)
+                };
+                let br = {
+                    x: tr.x - height * Math.sin(radian),
+                    y: tr.y + height * Math.cos(radian)
+                };
+                let bl = {
+                    x: tl.x - height * Math.sin(radian),
+                    y: tl.y + height * Math.cos(radian)
+                };
+                let center = {
+                    x: (tl.x + br.x) / 2,
+                    y: (tl.y + br.y) / 2
+                }
+                return {
+                    tl,
+                    tr,
+                    br,
+                    bl,
+                    center
+                };
+            }
+            // hasOverstepped() {
+            //     const vertexes = ['tl', 'tr', 'br', 'bl'];
+            //     return vertexes.some((vertex, index) => {
+            //         const startVertex = vertex;
+            //         const middleVertex = vertexes[index + 1 > vertexes.length - 1 ? index + 1 - vertexes.length : index + 1] || vertexes[0];
+            //         const endVertex = vertexes[index + 2 > vertexes.length - 1 ? index + 2 - vertexes.length : index + 2] || vertexes[0];
+            //         const a = this.coords[startVertex];
+            //         const b = this.coords[middleVertex];
+            //         const c = rect1.coords[middleVertex];
+            //         const d = rect1.coords[endVertex];
+            //         //快速排斥
+            //         const reject = Math.min(a.x, b.x) < Math.max(c.x, d.x) && Math.min(c.y, d.y) < Math.max(a.y, b.y) && Math.min(c.x, d.x) < Math.max(a.x, b.x) && Math.min(a.y, b.y) < Math.max(c.y, d.y);
+            //         if(!reject){
+            //             return false;
+            //         }
+            //         //跨立实验
+            //         const u = (c.x - a.x) * (b.y - a.y) - (b.x - a.x) * (c.y - a.y);
+            //         const v = (d.x - a.x) * (b.y - a.y) - (b.x - a.x) * (d.y - a.y);
+            //         const w = (a.x - c.x) * (d.y - c.y) - (d.x - c.x) * (a.y - c.y);
+            //         const z = (b.x - c.x) * (d.y - c.y) - (d.x - c.x) * (b.y - c.y);
+            //         const straddle = u * v < 0 && w * z < 0;
+            //         console.log(reject, straddle);
+            //         return reject && straddle;
+            //     });
+            // }
+            hasOverstepped() {
+                const vertexes = ['tl', 'tr', 'br', 'bl'];
+                return vertexes.some((vertex, index) => {
+                    const startVertex = vertex;
+                    const endVertex = vertexes[index + 1 > vertexes.length - 1 ? index + 1 - vertexes.length : index + 1] || vertexes[0];
+                    const a = this.coords[startVertex];
+                    const b = this.coords[endVertex];
+                    return vertexes.some((vertex, index) => {
+                        const startVertex = vertex;
+                        const endVertex = vertexes[index + 1 > vertexes.length - 1 ? index + 1 - vertexes.length : index + 1] || vertexes[0];
+                        const c = rect1.coords[startVertex];
+                        const d = rect1.coords[endVertex];
+                        //快速排斥
+                        const reject = Math.min(a.x, b.x) < Math.max(c.x, d.x) && Math.min(c.y, d.y) < Math.max(a.y, b.y) && Math.min(c.x, d.x) < Math.max(a.x, b.x) && Math.min(a.y, b.y) < Math.max(c.y, d.y);
+                        if(!reject){
+                            return false;
+                        }
+                        //跨立实验
+                        const u = (c.x - a.x) * (b.y - a.y) - (b.x - a.x) * (c.y - a.y);
+                        const v = (d.x - a.x) * (b.y - a.y) - (b.x - a.x) * (d.y - a.y);
+                        const w = (a.x - c.x) * (d.y - c.y) - (d.x - c.x) * (a.y - c.y);
+                        const z = (b.x - c.x) * (d.y - c.y) - (d.x - c.x) * (b.y - c.y);
+                        const straddle = u * v < 0 && w * z < 0;
+                        return reject && straddle;
+                    });
+                });
+            }
+            initDom() {
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.width = this.width + 'px';
+                div.style.height = this.height + 'px';
+                div.style.left = this.left + 'px';
+                div.style.top = this.top + 'px';
+                div.style.backgroundColor = this.color;
+                div.style.cursor = 'move';
+                div.style.transform = `rotate(${this.angle}deg)`;
+                div.style.transformOrigin = 'left top';
+                this.dom = div;
+                document.body.appendChild(div);
+                this.initEvent();
+            }
+            initEvent() {
+                if (!this.isLocked) {
+                    this.dom.addEventListener('mousedown', (event) => {
+                        this.canMove = true;
+                        this.start = {
+                            x: event.clientX,
+                            y: event.clientY,
+                            left: this.left,
+                            top: this.top
+                        };
+                        this.dom.style.zIndex = 2;
+                    });
+                    this.dom.addEventListener('mousemove', (event) => {
+                        if (this.canMove) {
+                            const oldLeft = this.left;
+                            const oldTop = this.top;
+                            let newLeft = this.start.left + (event.clientX - this.start.x);
+                            this.left = newLeft;
+                            let newTop = this.start.top + (event.clientY - this.start.y);
+                            this.top = newTop;
+                            this.setCoords();
+                            if(this.hasOverstepped()){
+                                this.left = oldLeft;
+                                this.top = oldTop;
+                                this.setCoords();
+                            }else{
+                                this.dom.style.left = this.left + 'px';
+                                this.dom.style.top = this.top + 'px';
+                            }
+                        }
+                    });
+                    this.dom.addEventListener('mouseup', () => {
+                        this.canMove = false;
+                        this.dom.style.zIndex = 1;
+                    });
+                }
+
+            }
+        }
+        class Circle extends Rect {
+            constructor(options) {
+                super(options);
+            }
+            initDom() {
+                const div = document.createElement('div');
+                div.style.position = 'absolute';
+                div.style.width = this.width + 'px';
+                div.style.height = this.height + 'px';
+                div.style.left = this.left + 'px';
+                div.style.top = this.top + 'px';
+                div.style.backgroundColor = this.color;
+                div.style.cursor = 'move';
+                div.style.transform = `rotate(${this.angle}deg)`;
+                div.style.transformOrigin = 'left top';
+                div.style.borderRadius = '100%';
+                this.dom = div;
+                document.body.appendChild(div);
+                this.initEvent();
+            }
+            hasOverstepped() {
+                const vertexes = ['tl', 'tr', 'br', 'bl'];
+                return vertexes.some((vertex, index) => {
+                    const startVertex = vertex;
+                    const endVertex = vertexes[index + 1 > vertexes.length - 1 ? index + 1 - vertexes.length : index + 1] || vertexes[0];
+                    const a = rect1.coords[startVertex];
+                    const b = rect1.coords[endVertex];
+                    const center = this.coords.center;
+                    //点到直线距离公式
+                    const A = b.y - a.y;
+                    const B = a.x - b.x;
+                    const C = b.x * a.y - a.x * b.y;
+                    const distance = Math.abs((A * center.x + B * center.y + C) / Math.sqrt(A ** 2 + B ** 2));
+                    return distance < this.width / 2;
+                });
+            }
+            
+        }
+        const rect1 = new Rect({
+            width: 1000,
+            height: 600,
+            left: 200,
+            top: 100,
+            color: 'red',
+            isLocked: true,
+            angle: 10,
+        });
+        const rect2 = new Rect({
+            width: 300,
+            height: 200,
+            left: 350,
+            top: 300,
+            color: 'blue',
+            angle: 10,
+        });
+        const rect3 = new Rect({
+            width: 130,
+            height: 190,
+            left: 200,
+            top: 300,
+            color: 'green',
+            angle: 0,
+        });
+        const rect4 = new Rect({
+            width: 200,
+            height: 100,
+            left: 700,
+            top: 400,
+            color: 'orange',
+            angle: 60,
+        });
+        const circle = new Circle({
+            width: 200,
+            height: 200,
+            left: 800,
+            top: 400,
+            color: 'pink',
+            angle: 0,
+        });
+    </script>
+</body>
+
+</html>
